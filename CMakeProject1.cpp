@@ -3,114 +3,53 @@
 #include <chrono>
 #include <vector>
 
-//vector
-void moving_avg_p(std::vector<double>&, unsigned int);
-std::vector<double> moving_avg(std::vector<double>, unsigned int);
 // c style
-void moving_avg_c(double* mass, unsigned int* size_mass, const unsigned int size_window);
+extern void moving_avg(double* mass, unsigned int* size_mass, const unsigned int size_window);
+extern void moving_avg(float* mass, unsigned int* size_mass, const unsigned int size_window);
 
 
 int main() {
 
 	srand(time(0));
 
-	int min = -1000;
-	int max = 1000;
+	int min_value = -1000;
+	int max_value = 1000;
 
-	unsigned int size_mass = 100000;
+	unsigned int size_mass = 0;
 
-	double * mass_c{ new double[size_mass] };
-	//unsigned int size_mass = _msize(mass) / sizeof(mass[0]);
-	std::vector<double> mass(size_mass);
+	double* mass_double; 
+	float* mass_float; 
 
+	//double rez_time = 0; 
+	float rez_time = 0; 
+	
 
-	unsigned int size_window = 4;
+	unsigned int size_window = 128;
 
-	for (unsigned int i = 0; i < size_mass; i++) {
-		//mass[i] = rand() / static_cast<double>(RAND_MAX) * (max - min) + min;
-		mass_c[i] = rand() / static_cast<double>(RAND_MAX) * (max - min) + min;
-		std::cout << "mass = " << mass_c[i] << "\t i = " << i <<"\n";
+	for (size_t j = 0; j < 100; j++)
+	{
+		size_mass = 1000000;
+		//mass_float = new double[size_mass];
+		mass_float = new float[size_mass];
+
+		for (unsigned int i = 0; i < size_mass; i++) {
+			//mass_float[i] = rand() / static_cast<double>(RAND_MAX) * (max_value - min_value) + min_value;
+			mass_float[i] = rand() / static_cast<float>(RAND_MAX) * (max_value - min_value) + min_value;
+			//std::cout << "mass = " << mass[i] << "\t i = " << i <<"\n";
+		}
+
+		auto start_time = std::chrono::steady_clock::now();
+
+		moving_avg(mass_float, &size_mass, size_window);
+
+		auto end_time = std::chrono::steady_clock::now();
+		auto diff_mks = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
+		std::cout << "diff_ns = " << static_cast<double>(diff_mks.count())/ 1e6 << "s \n";
+		rez_time += static_cast<double>(diff_mks.count());
 	}
 
-	for (size_t i = 0; i < mass.size(); i++)
-		std::cout << "mass = " << mass[i] << "\n";
-
-
-	auto start_time = std::chrono::steady_clock::now();
-
-
-	//moving_avg_p(mass, size_window);
-	moving_avg(mass, size_window);
-	//moving_avg_c(&mass_c[0], &size_mass, size_window);
-
-
-	auto end_time = std::chrono::steady_clock::now();
-	auto diff_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time);
-	std::cout << diff_ns.count() << "ns \n";
-
-	//for (size_t i = 0; i < size_mass; i++)
-	//	std::cout << "mass = " << mass_c_rez[i] << "\t i = " << i << "\n";
-
-
+	std::cout << "rez_time = " << rez_time / 100e6 << "s \n";
 
 	return 0;
 }
 
-void moving_avg_c(double* mass, unsigned int *size_mass, const unsigned int size_window) {
-	
-	double sma = 0;
-	double first_num_window = 0;
-
-	for (size_t i = 0; i < size_window; i++)
-		sma += mass[i] / size_window;
-
-	for (unsigned int i = 0; i < *size_mass; i++) {
-		first_num_window = mass[i];
-		mass[i] = sma;
-		sma += ((mass[i + size_window]) - first_num_window) / size_window;
-	}
-
-	*size_mass -= size_window;
-
-	return;
-}
-
-
-void moving_avg_p(std::vector<double> &mass, const unsigned int size_window) {
-	
-	double sma = 0;
-	double first_num_window = 0;
-
-	for (unsigned int i = 0; i < size_window; i++)
-		sma += mass[i] / size_window;
-
-	for (unsigned int i = 0; i < mass.size() - size_window; i++) {
-		first_num_window = mass[i];
-		mass[i] = sma ;
-		sma += ((mass[i + size_window]) - first_num_window) / size_window;
-	}
-
-	mass.resize(mass.size() - size_window);
-	mass.shrink_to_fit();
-	
-	return;
-}
-
-std::vector<double> moving_avg(std::vector<double> mass, const unsigned int size_window) {
-
-	double sma = 0;
-	double first_num_window = 0;
-
-	std::vector<double> mass_rez(mass.size() - size_window);
-
-	for (unsigned int i = 0; i < size_window; i++)
-		sma += mass[i] / size_window;
-
-	for (unsigned int i = 0; i < mass.size() - size_window; i++) {
-		first_num_window = mass[i];
-		mass_rez[i] = sma;
-		sma += ((mass[i + size_window]) - first_num_window) / size_window;
-	}
-
-	return mass_rez;
-}
